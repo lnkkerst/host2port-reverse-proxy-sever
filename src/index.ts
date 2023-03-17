@@ -1,6 +1,20 @@
 import { createProxyServer } from 'http-proxy';
 import { createServer } from 'http';
 import { Socket } from 'net';
+import config from '../config';
+
+interface Options {
+  whiteList: number[];
+}
+
+export function defineConfig(options: Options) {
+  return options;
+}
+
+let portWhiteList = new Set();
+for (let x of config.whiteList) {
+  portWhiteList.add(x);
+}
 
 let proxy = createProxyServer();
 proxy.on('error', (_err, _req, res) => {
@@ -22,7 +36,20 @@ if (host.endsWith('/')) {
 const port = process.env.PORT ?? 3000;
 
 createServer((req, res) => {
-  const port = req.headers?.host?.split('.')[0];
+  const port = parseInt(req.headers?.host?.split('.')[0] ?? '');
+
+  if (isNaN(port)) {
+    res.writeHead(400, { 'Content-Type': 'text-plain' });
+    res.end('400');
+    return;
+  }
+
+  if (!portWhiteList.has(port)) {
+    res.writeHead(403, { 'Content-Type': 'text-plain' });
+    res.end('403');
+    return;
+  }
+
   proxy.web(req, res, { target: `${host}:${port}` });
 }).listen(port);
 
