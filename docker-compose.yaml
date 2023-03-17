@@ -1,0 +1,11 @@
+version: '3.0'
+services:
+  host2port-reverse-proxy:
+    build: .
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - 127.0.0.1:3010:80
+    environment:
+      - PROXY_HOST=http://host.docker.internal
+    restart: unless-stopped
