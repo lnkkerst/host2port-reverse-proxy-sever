@@ -2,6 +2,7 @@ import { createProxyServer } from 'http-proxy';
 import { createServer } from 'http';
 import { Socket } from 'net';
 import config from '../config';
+import { exit } from 'process';
 
 interface Options {
   whiteList: number[];
@@ -35,7 +36,7 @@ if (host.endsWith('/')) {
 }
 const port = process.env.PORT ?? 3000;
 
-createServer((req, res) => {
+const server = createServer((req, res) => {
   const port = parseInt(req.headers?.host?.split('.')[0] ?? '');
 
   if (isNaN(port)) {
@@ -54,3 +55,17 @@ createServer((req, res) => {
 }).listen(port);
 
 console.log(`listening on ${host}:${port}`);
+
+process.on('SIGTERM', () => {
+  console.log('closing server...');
+  server.close(() => {
+    exit();
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('closing server...');
+  server.close(() => {
+    exit();
+  });
+});
